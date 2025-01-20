@@ -1,7 +1,10 @@
 const mysql = require('mysql2/promise');
 const fs = require('fs');
+
+// Read database configuration from config.json
 const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8')).database;
 
+// Create a MySQL connection pool
 const pool = mysql.createPool({
     host: config.host,
     user: config.user,
@@ -12,8 +15,8 @@ const pool = mysql.createPool({
     queueLimit: 0,
 });
 
-async function getConnection() {
-    return pool.getConnection();
-}
-
-module.exports = { getConnection, pool };
+// Export the connection pool and utility function
+module.exports = {
+    pool,
+    getConnection: () => pool.getConnection()
+};

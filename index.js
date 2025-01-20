@@ -1,24 +1,30 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { getConnection } = require('./database.js');
+const { pool } = require('./database.js'); // Import pool directly
 
 const configPath = './config.json';
 let config = require(configPath);
 
-const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const client = new Client({
+    intents: [
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent
+    ]
+});
 
 client.slashCommands = new Collection();
 client.prefixCommands = new Collection();
 
-// Load slash commands from the folder
+// Load slash commands
 const slashCommandFiles = fs.readdirSync(path.join(__dirname, 'SlashCommands')).filter(file => file.endsWith('.js'));
 for (const file of slashCommandFiles) {
     const command = require(`./SlashCommands/${file}`);
     client.slashCommands.set(command.data.name, command);
 }
 
-// Load prefix commands from all folders in PrefixCommands
+// Load prefix commands recursively
 function loadPrefixCommands(dir) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     for (const file of files) {
@@ -33,65 +39,55 @@ function loadPrefixCommands(dir) {
 }
 loadPrefixCommands(path.join(__dirname, 'PrefixCommands'));
 
-// reload config.json
+// Reload config.json dynamically
 fs.watchFile(configPath, () => {
     delete require.cache[require.resolve(configPath)];
     config = require(configPath);
     console.log(`Config reloaded. New prefix: ${config.prefix}`);
 });
 
+// Handle client ready event
 client.once('ready', async () => {
     console.log(`\x1b[34m\x1b[1mLogged in as ${client.user.tag}!\x1b[0m`);
     client.user.setPresence({ activities: [{ name: '/help | by @bebek.xdw' }], status: 'online' });
 
-    let connection;
     try {
-        connection = await getConnection();
-
+        const connection = await pool.getConnection();
         console.log('\x1b[32m\x1b[1mConnected to the database!\x1b[0m');
 
         const guilds = client.guilds.cache;
         let newGuildCount = 0;
 
         for (const guild of guilds.values()) {
-            const guildId = guild.id;
-            const [rows] = await connection.query('SELECT * FROM server_info WHERE guildId = ?', [guildId]);
-
+            const [rows] = await connection.query('SELECT * FROM server_info WHERE guildId = ?', [guild.id]);
             if (rows.length === 0) {
-                const defaultPrefix = '!'; // Default prefix if not found
-                await connection.query('INSERT INTO server_info (guildId, prefix) VALUES (?, ?)', [guildId, defaultPrefix]);
+                const defaultPrefix = config.prefix || '!';
+                await connection.query('INSERT INTO server_info (guildId, prefix) VALUES (?, ?)', [guild.id, defaultPrefix]);
                 newGuildCount++;
             }
         }
 
         console.log(`\x1b[34m\x1b[2mTracked ${guilds.size} guilds in the database. Added ${newGuildCount} new guild(s).\x1b[0m`);
+        connection.release();
     } catch (error) {
         console.error('Error connecting to MySQL:', error);
-    } finally {
-        if (connection) {
-            await connection.release();
-        }
     }
 });
 
+// Handle guild creation
 client.on('guildCreate', async guild => {
-    let connection;
     try {
-        connection = await getConnection();
-
-        const defaultPrefix = config.prefix;
+        const connection = await pool.getConnection();
+        const defaultPrefix = config.prefix || '!';
         await connection.query('INSERT INTO server_info (guildId, prefix) VALUES (?, ?)', [guild.id, defaultPrefix]);
-
         console.log(`Added new guild to database: ${guild.id}`);
+        connection.release();
     } catch (error) {
         console.error('\x1b[31m\x1b[1mError adding new guild to MySQL:\x1b[0m', error);
-    } finally {
-        if (connection) {
-            await connection.release();
-        }
     }
 });
 
+// Handle slash commands
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
@@ -106,28 +102,28 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+// Handle prefix commands
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
 
-    let connection;
     let prefix;
-    try {
-        connection = await getConnection();
 
+    try {
+        const connection = await pool.getConnection();
         const [rows] = await connection.query('SELECT prefix FROM server_info WHERE guildId = ?', [message.guild.id]);
+
         if (rows.length > 0) {
             prefix = rows[0].prefix;
         } else {
             console.error('\x1b[31m\x1b[1mGuild not found in database.\x1b[0m');
+            connection.release();
             return;
         }
+
+        connection.release();
     } catch (error) {
-        console.error('\x1b[31m\x1b[1mError connecting to MySQL:\x1b[0m', error);
+        console.error('\x1b[31m\x1b[1mError fetching prefix from MySQL:\x1b[0m', error);
         return;
-    } finally {
-        if (connection) {
-            await connection.release();
-        }
     }
 
     if (!message.content.startsWith(prefix)) return;
@@ -145,4 +141,5 @@ client.on('messageCreate', async message => {
     }
 });
 
+// Login to Discord
 client.login(config.token);

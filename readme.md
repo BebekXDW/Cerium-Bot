@@ -33,27 +33,26 @@ npm install discord.js mysql2 dotenv
 ```
 - **discord.js:** This is the main library for interacting with the Discord API.
 - **mysql2:** This package is used for interacting with your MySQL database.
-- **dotenv:** For loading environment variables, useful for keeping sensitive info like tokens and database credentials outside of your code.
 
 ### 3. Configure the Bot
-Update the `config.json` file in the root directory with the following structure:
+Create the `config.json` file in the root directory with the following structure:
 
 ```json
 {
-  "token": "YOUR_DISCORD_BOT_TOKEN",
-  "clientId": "YOUR_DISCORD_CLIENT_ID",
-
-    "host": "YOUR_SQL_HOST",
-    "user": "YOUR_USER",
-    "password": "YOUR_PASSWORD",
-    "database": "YOUR_DB_NAME"
+  "token": "bot token",
+  "database": {
+    "host": "localhost (or ip if not testing localy)",
+    "user": "username",
+    "password": "password",
+    "name": "database name"
+  }
 }
 ```
 
-Replace `YOUR_DISCORD_BOT_TOKEN`, `YOUR_DISCORD_CLIENT_ID`, and database credentials with your actual values.
+Replace Every credential with your actual values.
 
 ### 4. Setup the Database
-Run the following SQL to create the required `server_logs` table in your MySQL database:
+Run the following SQL to create the required `server_info` table in your MySQL database:
 
 ```sql
 CREATE TABLE server_logs (

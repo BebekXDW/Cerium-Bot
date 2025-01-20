@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const mysql = require('mysql2/promise');
+const { getConnection } = require('./database.js');
 
 const configPath = './config.json';
 let config = require(configPath);
@@ -11,14 +11,14 @@ const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBit
 client.slashCommands = new Collection();
 client.prefixCommands = new Collection();
 
-// Load slash commands from the SlashCommands folder
+// Load slash commands from the folder
 const slashCommandFiles = fs.readdirSync(path.join(__dirname, 'SlashCommands')).filter(file => file.endsWith('.js'));
 for (const file of slashCommandFiles) {
     const command = require(`./SlashCommands/${file}`);
     client.slashCommands.set(command.data.name, command);
 }
 
-// Load prefix commands from all subdirectories in PrefixCommands
+// Load prefix commands from all folders in PrefixCommands
 function loadPrefixCommands(dir) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     for (const file of files) {
@@ -33,7 +33,7 @@ function loadPrefixCommands(dir) {
 }
 loadPrefixCommands(path.join(__dirname, 'PrefixCommands'));
 
-// Watch for changes in config.json and reload it dynamically
+// reload config.json
 fs.watchFile(configPath, () => {
     delete require.cache[require.resolve(configPath)];
     config = require(configPath);
@@ -41,20 +41,14 @@ fs.watchFile(configPath, () => {
 });
 
 client.once('ready', async () => {
-    console.log(`Logged in as ${client.user.tag}!`);
+    console.log(`\x1b[34m\x1b[1mLogged in as ${client.user.tag}!\x1b[0m`);
     client.user.setPresence({ activities: [{ name: '/help | by @bebek.xdw' }], status: 'online' });
 
     let connection;
     try {
-        connection = await mysql.createConnection({
-            host: config.database.host,
-            user: config.database.user,
-            password: config.database.password,
-            database: config.database.name,
-        });
-        
+        connection = await getConnection();
 
-        console.log('Connected to MySQL database!');
+        console.log('\x1b[32m\x1b[1mConnected to the database!\x1b[0m');
 
         const guilds = client.guilds.cache;
         let newGuildCount = 0;
@@ -64,18 +58,18 @@ client.once('ready', async () => {
             const [rows] = await connection.query('SELECT * FROM server_info WHERE guildId = ?', [guildId]);
 
             if (rows.length === 0) {
-                const defaultPrefix = '!';
+                const defaultPrefix = '!'; // Default prefix if not found
                 await connection.query('INSERT INTO server_info (guildId, prefix) VALUES (?, ?)', [guildId, defaultPrefix]);
                 newGuildCount++;
             }
         }
 
-        console.log(`Tracked ${guilds.size} guilds in the database. Added ${newGuildCount} new guild(s).`);
+        console.log(`\x1b[34m\x1b[2mTracked ${guilds.size} guilds in the database. Added ${newGuildCount} new guild(s).\x1b[0m`);
     } catch (error) {
         console.error('Error connecting to MySQL:', error);
     } finally {
         if (connection) {
-            await connection.end();
+            await connection.release();
         }
     }
 });
@@ -83,23 +77,17 @@ client.once('ready', async () => {
 client.on('guildCreate', async guild => {
     let connection;
     try {
-        connection = await mysql.createConnection({
-            host: config.database.host,
-            user: config.database.user,
-            password: config.database.password,
-            database: config.database.name,
-        });
-        
+        connection = await getConnection();
 
         const defaultPrefix = config.prefix;
         await connection.query('INSERT INTO server_info (guildId, prefix) VALUES (?, ?)', [guild.id, defaultPrefix]);
 
         console.log(`Added new guild to database: ${guild.id}`);
     } catch (error) {
-        console.error('Error adding new guild to MySQL:', error);
+        console.error('\x1b[31m\x1b[1mError adding new guild to MySQL:\x1b[0m', error);
     } finally {
         if (connection) {
-            await connection.end();
+            await connection.release();
         }
     }
 });
@@ -113,7 +101,7 @@ client.on('interactionCreate', async interaction => {
     try {
         await command.execute(interaction);
     } catch (error) {
-        console.error('Error executing slash command:', error);
+        console.error('\x1b[31m\x1b[1mError executing slash command:\x1b[0m', error);
         await interaction.reply({ content: 'An error occurred while executing this command.', ephemeral: true });
     }
 });
@@ -124,27 +112,21 @@ client.on('messageCreate', async message => {
     let connection;
     let prefix;
     try {
-        connection = await mysql.createConnection({
-            host: config.database.host,
-            user: config.database.user,
-            password: config.database.password,
-            database: config.database.name,
-        });
-        
+        connection = await getConnection();
 
         const [rows] = await connection.query('SELECT prefix FROM server_info WHERE guildId = ?', [message.guild.id]);
         if (rows.length > 0) {
             prefix = rows[0].prefix;
         } else {
-            console.error('Guild not found in database.');
+            console.error('\x1b[31m\x1b[1mGuild not found in database.\x1b[0m');
             return;
         }
     } catch (error) {
-        console.error('Error connecting to MySQL:', error);
+        console.error('\x1b[31m\x1b[1mError connecting to MySQL:\x1b[0m', error);
         return;
     } finally {
         if (connection) {
-            await connection.end();
+            await connection.release();
         }
     }
 
@@ -158,7 +140,7 @@ client.on('messageCreate', async message => {
     try {
         await command.execute(message, args);
     } catch (error) {
-        console.error(`Error executing prefix command: ${commandName}`, error);
+        console.error(`\x1b[31m\x1b[1mError executing prefix command: ${commandName}\x1b[0m`, error);
         message.reply('An error occurred while executing this command.');
     }
 });

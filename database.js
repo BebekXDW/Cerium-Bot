@@ -1,12 +1,19 @@
 const mysql = require('mysql2/promise');
-const config = require('./config.json'); // Import database credentials
+const fs = require('fs');
+const config = JSON.parse(fs.readFileSync('./config.json', 'utf-8')).database;
 
-// Create and export a database connection pool
-const db = mysql.createPool({
-    host: config.database.host,
-    user: config.database.user,
-    password: config.database.password,
-    database: config.database.name,
+const pool = mysql.createPool({
+    host: config.host,
+    user: config.user,
+    password: config.password,
+    database: config.name,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0,
 });
 
-module.exports = db;
+async function getConnection() {
+    return pool.getConnection();
+}
+
+module.exports = { getConnection, pool };

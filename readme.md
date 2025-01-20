@@ -29,7 +29,7 @@ Downlad it [here](https://github.com/BebekXDW/CeriumBot/releases/).
 
 ### 2. Install Dependencies in the project folder
 ```bash
-npm install discord.js mysql2 dotenv
+npm install discord.js mysql2
 ```
 - **discord.js:** This is the main library for interacting with the Discord API.
 - **mysql2:** This package is used for interacting with your MySQL database.
@@ -40,8 +40,10 @@ Create the `config.json` file in the root directory with the following structure
 ```json
 {
   "token": "bot token",
+  "clientId": "bot client id",
+
   "database": {
-    "host": "localhost (or ip if not testing localy)",
+    "host": "localhost (or server ip if not localy)",
     "user": "username",
     "password": "password",
     "name": "database name"
@@ -59,13 +61,17 @@ CREATE TABLE server_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,
   guildId VARCHAR(255) NOT NULL,
   prefix VARCHAR(5) DEFAULT '!',
-  modRoleId VARCHAR(255),
-  botLogs VARCHAR(255),
-  joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  joinDate TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 ## Running the Bot
+To deploy the commands:
+
+```bash
+node deploy-commands.js
+```
+
 To start the bot, use:
 
 ```bash

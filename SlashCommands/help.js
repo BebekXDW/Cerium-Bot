@@ -1,16 +1,16 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
 const { getConnection } = require('../database.js');
 
-// Function to get the prefix from the database
+// get prefix from database
 async function getPrefix(guildId) {
     let connection;
     try {
         connection = await getConnection();
         const [rows] = await connection.execute('SELECT prefix FROM server_info WHERE guildId = ?', [guildId]);
-        return rows[0] ? rows[0].prefix : '```error```'; // Return error if not found
+        return rows[0] ? rows[0].prefix : '```error```';
     } catch (error) {
         console.error('Error retrieving prefix:', error);
-        return '!'; // Default prefix in case of an error
+        return '!';
     } finally {
         if (connection) {
             connection.release();
@@ -25,17 +25,17 @@ module.exports = {
     async execute(interaction) {
         const { client } = interaction;
 
-        // Get values from the database
+        // get values from the database
         const prefix = await getPrefix(interaction.guild.id);
         const guildId = interaction.guild.id;
 
-        // Create a map to hold commands by category
+        // create map to hold commands by category
         const commandCategories = {};
 
-        // Organize commands by their folder (category), only include those that have 'ShownInHelp' != 'No'
+        // organize commands by their folder and check for 'shownHelp'
         client.prefixCommands.forEach(command => {
             if (command.ShownInHelp !== 'No') {
-                const folderName = command.folder || 'General'; // Default 'General' if no folder
+                const folderName = command.folder || 'General';
                 if (!commandCategories[folderName]) {
                     commandCategories[folderName] = [];
                 }
@@ -45,18 +45,18 @@ module.exports = {
             }
         });
 
-        // Create the help message embed
+        // message embed
         const helpEmbed = new EmbedBuilder()
-            .setColor('#000000') // Black color
+            .setColor('#000000')
             .setTitle(`Here is some useful info:`)
             .setDescription(`**Server ID:** ||${guildId}||\n**Server Prefix:** \`${prefix}\`\n **Website:** -In Progress-\n\nSome basic prefix commands:`);
 
-        // Add command categories to the embed
+        // add command categories to the embed
         for (const [category, commands] of Object.entries(commandCategories)) {
             helpEmbed.addFields({ name: category, value: commands.join('\n') || 'No commands available.' });
         }
 
-        // Reply with the embed as an ephemeral message
+        // send the messsage as ephemeral
         try {
             await interaction.reply({
                 embeds: [helpEmbed],

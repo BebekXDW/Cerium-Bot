@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, Collection } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
-const { pool } = require('./database.js'); // Import pool directly
+const { pool } = require('./database.js');
 
 const configPath = './config.json';
 let config = require(configPath);
@@ -17,14 +17,14 @@ const client = new Client({
 client.slashCommands = new Collection();
 client.prefixCommands = new Collection();
 
-// Load slash commands
+// load slash commands
 const slashCommandFiles = fs.readdirSync(path.join(__dirname, 'SlashCommands')).filter(file => file.endsWith('.js'));
 for (const file of slashCommandFiles) {
     const command = require(`./SlashCommands/${file}`);
     client.slashCommands.set(command.data.name, command);
 }
 
-// Load prefix commands recursively
+// load prefix commands
 function loadPrefixCommands(dir) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
     for (const file of files) {
@@ -39,14 +39,14 @@ function loadPrefixCommands(dir) {
 }
 loadPrefixCommands(path.join(__dirname, 'PrefixCommands'));
 
-// Reload config.json dynamically
+// reload config.json dynamically
 fs.watchFile(configPath, () => {
     delete require.cache[require.resolve(configPath)];
     config = require(configPath);
     console.log(`Config reloaded. New prefix: ${config.prefix}`);
 });
 
-// Handle client ready event
+// client ready
 client.once('ready', async () => {
     console.log(`\x1b[34m\x1b[1mLogged in as ${client.user.tag}!\x1b[0m`);
     client.user.setPresence({ activities: [{ name: '/help | by @bebek.xdw' }], status: 'online' });
@@ -74,7 +74,7 @@ client.once('ready', async () => {
     }
 });
 
-// Handle guild creation
+// handle guild creation
 client.on('guildCreate', async guild => {
     try {
         const connection = await pool.getConnection();
@@ -87,7 +87,7 @@ client.on('guildCreate', async guild => {
     }
 });
 
-// Handle slash commands
+// handle slash commands
 client.on('interactionCreate', async interaction => {
     if (!interaction.isCommand()) return;
 
@@ -102,7 +102,7 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
-// Handle prefix commands
+// handle prefix commands
 client.on('messageCreate', async message => {
     if (message.author.bot) return;
 
@@ -141,5 +141,4 @@ client.on('messageCreate', async message => {
     }
 });
 
-// Login to Discord
 client.login(config.token);

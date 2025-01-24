@@ -26,7 +26,7 @@ module.exports = {
                 },
                 { 
                     name: '', 
-                    value: `**Servers:** ${serverCount}  \n**Users:** ${userCount}`, 
+                    value: `**Servers:** ${serverCount}  \n**Total Users:** ${userCount}`, 
                     inline: false 
                 },
                 { name: 'Uptime', value: uptime, inline: false },

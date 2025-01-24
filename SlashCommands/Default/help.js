@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, EmbedBuilder, MessageFlags } = require('discord.js');
-const { getConnection } = require('../database.js');
+const { getConnection } = require('../../database.js');
 
 // get prefix from database
 async function getPrefix(guildId) {

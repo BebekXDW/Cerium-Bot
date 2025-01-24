@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('serverinfo')
+        .setName('server-info')
         .setDescription('Displays information about this server'),
     async execute(interaction) {
         const guild = interaction.guild;

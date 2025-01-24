@@ -2,7 +2,7 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('userinfo')
+        .setName('user-info')
         .setDescription('Displays information about a user')
         .addUserOption(option =>
             option.setName('target')
@@ -14,7 +14,7 @@ module.exports = {
         const user = interaction.options.getUser('target') || interaction.user;
         const member = interaction.guild ? await interaction.guild.members.fetch(user.id) : null;
 
-        // Get user's presence status and activity
+        // get user's presence status and activity
         const presence = member ? member.presence : null;
         const status = presence ? presence.status : 'Offline';
         const activities = presence?.activities || [];

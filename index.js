@@ -11,44 +11,71 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
-        GatewayIntentBits.GuildMembers,    // Required for member data
-        GatewayIntentBits.GuildPresences   // Required for presence data
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildPresences
     ]
 });
 
 client.slashCommands = new Collection();
 client.prefixCommands = new Collection();
 
-// load slash commands
-const slashCommandFiles = fs.readdirSync(path.join(__dirname, 'SlashCommands')).filter(file => file.endsWith('.js'));
-for (const file of slashCommandFiles) {
-    const command = require(`./SlashCommands/${file}`);
-    client.slashCommands.set(command.data.name, command);
-}
+// load slash commands from subfolders
 
-// load prefix commands
-function loadPrefixCommands(dir) {
+function loadSlashCommands(dir = path.join(__dirname, 'SlashCommands')) {
     const files = fs.readdirSync(dir, { withFileTypes: true });
+
     for (const file of files) {
-        const filePath = path.join(dir, file.name);
+        const fullPath = path.join(dir, file.name);
+
         if (file.isDirectory()) {
-            loadPrefixCommands(filePath);
+            loadSlashCommands(fullPath);
         } else if (file.isFile() && file.name.endsWith('.js')) {
-            const command = require(filePath);
-            client.prefixCommands.set(command.name, command);
+            try {
+                const command = require(fullPath);
+                if (command?.data?.name && command?.execute) {
+                    client.slashCommands.set(command.data.name, command);
+                } else {
+                    console.warn(`Skipping invalid slash command file: ${fullPath}`);
+                }
+            } catch (err) {
+                console.error(`Error loading slash command file: ${fullPath}`, err);
+            }
         }
     }
 }
-loadPrefixCommands(path.join(__dirname, 'PrefixCommands'));
 
-// reload config.json dynamically
-fs.watchFile(configPath, () => {
-    delete require.cache[require.resolve(configPath)];
-    config = require(configPath);
-    console.log(`Config reloaded. New prefix: ${config.prefix}`);
-});
+loadSlashCommands();
 
-// client ready
+
+// load prefix commands from sub folders
+ 
+function loadPrefixCommands(dir = path.join(__dirname, 'PrefixCommands')) {
+    const files = fs.readdirSync(dir, { withFileTypes: true });
+
+    for (const file of files) {
+        const fullPath = path.join(dir, file.name);
+
+        if (file.isDirectory()) {
+            loadPrefixCommands(fullPath);
+        } else if (file.isFile() && file.name.endsWith('.js')) {
+            try {
+                const command = require(fullPath);
+                if (command?.name && command?.execute) {
+                    client.prefixCommands.set(command.name, command);
+                } else {
+                    console.warn(`Skipping invalid prefix command file: ${fullPath}`);
+                }
+            } catch (err) {
+                console.error(`Error loading prefix command file: ${fullPath}`, err);
+            }
+        }
+    }
+}
+
+loadPrefixCommands();
+
+
+// when client is ready
 client.once('ready', async () => {
     console.log(`\x1b[34m\x1b[1mLogged in as ${client.user.tag}!\x1b[0m`);
     client.user.setPresence({ activities: [{ name: '/help | by @bebek.xdw' }], status: 'online' });
@@ -76,7 +103,7 @@ client.once('ready', async () => {
     }
 });
 
-// handle guild creation
+// handle adding guilds
 client.on('guildCreate', async guild => {
     try {
         const connection = await pool.getConnection();
@@ -106,7 +133,7 @@ client.on('interactionCreate', async interaction => {
 
 // handle prefix commands
 client.on('messageCreate', async message => {
-    if (message.author.bot) return;
+    if (message.author.bot || !message.guild) return;
 
     let prefix;
 

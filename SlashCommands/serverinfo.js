@@ -7,9 +7,8 @@ module.exports = {
     async execute(interaction) {
         const guild = interaction.guild;
 
-        // Embed with server details in one line
         const embed = {
-            color: 0x1d3e69,
+            color: 0x021b3a,
             title: 'Server Information',
             thumbnail: { url: guild.iconURL() },
             fields: [

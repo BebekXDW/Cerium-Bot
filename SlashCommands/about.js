@@ -2,29 +2,23 @@ const { SlashCommandBuilder } = require('discord.js');
 
 module.exports = {
     data: new SlashCommandBuilder()
-        .setName('botinfo')
+        .setName('about')
         .setDescription('Displays information about the bot'),
     async execute(interaction) {
         const bot = interaction.client;
-
-        // Bot uptime
         const uptime = formatUptime(bot.uptime);
-
-        // Bot's creation date
         const creationDate = bot.user.createdAt.toDateString();
-
-        // Number of servers and users the bot is connected to
         const serverCount = bot.guilds.cache.size;
         const userCount = bot.guilds.cache.reduce((acc, guild) => acc + guild.memberCount, 0);
 
-        // Embed for better visual appeal
         const embed = {
-            color: 0x1d3e69, // Discord blue color
+            color: 0x021b3a,
             title: 'Some useful bot info:',
             thumbnail: {
-                url: bot.user.displayAvatarURL(), // Bot's avatar
+                url: bot.user.displayAvatarURL(),
             },
             fields: [
+                { name: 'About:', value: "Cerium Bot is an all-in-one, free and easy to use discord bot\nwhich helps with everything! from advanced moderation to\nfun user commands, Cerium bot is built for every server", inline: false },
                 { 
                     name: '', 
                     value: `**Name:** ${bot.user.username}  \n**Tag:** #${bot.user.discriminator}  \n**Bot ID:** ${bot.user.id}`, 
@@ -48,7 +42,7 @@ module.exports = {
     },
 };
 
-// Utility function to format uptime
+// format uptime of the bot
 function formatUptime(ms) {
     const seconds = Math.floor((ms / 1000) % 60);
     const minutes = Math.floor((ms / (1000 * 60)) % 60);
@@ -56,3 +50,6 @@ function formatUptime(ms) {
     const days = Math.floor(ms / (1000 * 60 * 60 * 24));
     return `${days}d ${hours}h ${minutes}m ${seconds}s`;
 }
+
+
+

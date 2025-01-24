@@ -9,10 +9,8 @@ module.exports = {
                 .setDescription('The user to display information for')
                 .setRequired(false)),
     async execute(interaction) {
-        // Acknowledge the interaction to prevent timeouts
         await interaction.deferReply();
 
-        // Get the target user or default to the command executor
         const user = interaction.options.getUser('target') || interaction.user;
         const member = interaction.guild ? await interaction.guild.members.fetch(user.id) : null;
 
@@ -22,9 +20,8 @@ module.exports = {
         const activities = presence?.activities || [];
         const activity = activities.length > 0 ? activities[0].name : 'None';
 
-        // Embed with user details
         const embed = {
-            color: 0x1d3e69,
+            color: 0x021b3a,
             title: `User Information`,
             thumbnail: { url: user.displayAvatarURL() },
             fields: [
@@ -45,12 +42,10 @@ module.exports = {
             timestamp: new Date(),
         };
 
-        // Send the embed as the final response
         await interaction.editReply({ embeds: [embed] });
     },
 };
-
-// Utility to capitalize the first letter of a string
+// capitalise the firs letter of every string
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }

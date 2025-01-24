@@ -57,7 +57,7 @@ Replace Every credential with your actual values.
 Run the following SQL to create the required `server_info` table in your MySQL database:
 
 ```sql
-CREATE TABLE server_logs (
+CREATE TABLE server_info (
   id INT AUTO_INCREMENT PRIMARY KEY,
   guildId VARCHAR(255) NOT NULL,
   prefix VARCHAR(5) DEFAULT '!',
@@ -76,6 +76,12 @@ To start the bot, use:
 
 ```bash
 node index.js
+```
+
+Or to easily run both scripts one after the other use:
+
+```bash
+node run.js
 ```
 
 ## Contributing

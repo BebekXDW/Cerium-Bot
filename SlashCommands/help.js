@@ -45,7 +45,6 @@ module.exports = {
             }
         });
 
-        // message embed
         const helpEmbed = new EmbedBuilder()
             .setColor('#000000')
             .setTitle(`Here is some useful info:`)

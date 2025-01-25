@@ -14,7 +14,7 @@ module.exports = {
         const user = interaction.options.getUser('target') || interaction.user;
         const member = interaction.guild ? await interaction.guild.members.fetch(user.id) : null;
 
-        // get user's presence status and activity
+        // get user presence status and activity
         const presence = member ? member.presence : null;
         const status = presence ? presence.status : 'Offline';
         const activities = presence?.activities || [];

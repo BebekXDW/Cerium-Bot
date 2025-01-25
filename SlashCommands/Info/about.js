@@ -42,7 +42,7 @@ module.exports = {
     },
 };
 
-// format uptime of the bot
+// format uptime of bot
 function formatUptime(ms) {
     const seconds = Math.floor((ms / 1000) % 60);
     const minutes = Math.floor((ms / (1000 * 60)) % 60);

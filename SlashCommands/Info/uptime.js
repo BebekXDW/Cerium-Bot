@@ -3,7 +3,7 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('uptime')
-        .setDescription('Displays how long the bot has been online'),
+        .setDescription('Displays information about how long the bot has been online'),
     async execute(interaction) {
         const uptime = process.uptime();
         const hours = Math.floor(uptime / 3600);

@@ -3,7 +3,7 @@ const { SlashCommandBuilder } = require('discord.js');
 module.exports = {
     data: new SlashCommandBuilder()
         .setName('support')
-        .setDescription('Get support for the bot'),
+        .setDescription('Get support or information for the bot'),
     async execute(interaction) {
         const supportLink = 'https://discord.gg/Gwnx87jgBv';
 
